@@ -1,10 +1,13 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const mysql = require('mysql2');
-const cors = require('cors');
-const bcrypt = require('bcryptjs'); // for password hashing
+require("dotenv").config();
+
+const express = require("express");
+const bodyParser = require("body-parser");
+const mysql = require("mysql2");
+const cors = require("cors");
+const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
+
 
 // Initialize app
 const app = express();
@@ -21,7 +24,7 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: true
   }
 });
 
