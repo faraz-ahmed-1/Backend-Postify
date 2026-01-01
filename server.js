@@ -144,7 +144,7 @@ app.get("/api/profile", (req, res) => {
                WHERE f.follower_id = ? AND f.following_id = u.user_id
              )
            END AS isFollowed
-    FROM users u
+    FROM Users u
     WHERE u.username = ?
   `;
 
@@ -249,7 +249,7 @@ app.get("/user/by-username/:username", (req, res) => {
       (SELECT COUNT(*) FROM followers WHERE following_id = u.user_id) AS followers,
       (SELECT COUNT(*) FROM followers WHERE follower_id = u.user_id) AS following,
       EXISTS(SELECT 1 FROM followers WHERE follower_id = ? AND following_id = u.user_id) AS isFollowed
-    FROM users u
+    FROM Users u
     WHERE u.username = ?
   `;
 
@@ -543,7 +543,7 @@ app.post("/api/comment", (req, res) => {
     const findOwner = `
       SELECT p.user_id AS ownerId, u.user_id AS commenterId 
       FROM posts p 
-      JOIN users u ON u.username = ? 
+      JOIN Users u ON u.username = ? 
       WHERE p.id = ?
     `;
 
@@ -634,7 +634,7 @@ app.get("/user/:id", (req, res) => {
       (SELECT COUNT(*) FROM followers WHERE following_id = u.user_id) AS followers,
       (SELECT COUNT(*) FROM followers WHERE follower_id = u.user_id) AS following,
       EXISTS(SELECT 1 FROM followers WHERE follower_id = ? AND following_id = u.user_id) AS isFollowed
-    FROM users u
+    FROM Users u
     WHERE u.user_id = ?
   `;
 
@@ -1051,7 +1051,7 @@ app.get("/api/conversations/:userId", (req, res) => {
           AND m.status != 'seen'
       ) AS unread_count
     FROM conversations c
-    JOIN users u 
+    JOIN Users u 
       ON (u.user_id = IF(c.user1_id = ?, c.user2_id, c.user1_id))
     WHERE c.user1_id = ? OR c.user2_id = ?
     ORDER BY last_time DESC
@@ -1104,7 +1104,7 @@ SELECT
   u.profile_pic AS sender_profile_pic
 FROM messages m
 LEFT JOIN posts p ON m.post_id = p.id
-JOIN users u ON m.sender_id = u.user_id
+JOIN Users u ON m.sender_id = u.user_id
 WHERE m.conversation_id = ? OR m.post_id = p.id
 ORDER BY m.created_at ASC;
 
