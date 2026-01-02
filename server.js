@@ -1,3 +1,5 @@
+import multer from "multer";
+import { storage } from "./config/cloudinary.js";
 require("dotenv").config();
 
 const express = require("express");
@@ -39,7 +41,7 @@ db.connect(err => {
 
 app.get('/', (req,res) => res.json({ ok: true }));
 
-app.use("/uploads", express.static("uploads"));
+const upload = multer({ storage });
 // --- Sign Up API ---
 app.post('/api/signup', async (req, res) => {
   try {
@@ -172,7 +174,6 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
 
 // --- Edit Profile API ---
 app.post("/api/edit-profile", upload.single("profile_pic"), async (req, res) => {
@@ -180,10 +181,7 @@ app.post("/api/edit-profile", upload.single("profile_pic"), async (req, res) => 
     const { full_name, bio, email, password, username } = req.body; 
     // ⚠️ username should come from session/token ideally, for now we accept from frontend
 
-    let profilePic = null;
-    if (req.file) {
-      profilePic = "/uploads/" + req.file.filename;
-    }
+const profilePic = req.file.path; // FULL URL
 
     // Build SQL dynamically depending on what fields were provided
     let updates = [];
@@ -271,17 +269,16 @@ app.post("/api/create-post", upload.single("media"), (req, res) => {
       return res.status(400).json({ message: "Username and caption are required" });
     }
 
+
     let imageUrl = null;
     let videoUrl = null;
 
     if (req.file) {
-      const filePath = "/uploads/" + req.file.filename;
-
       if (req.file.mimetype.startsWith("image")) {
-        imageUrl = filePath;
-      } else if (req.file.mimetype.startsWith("video")) {
-        videoUrl = filePath;
-      }
+      imageUrl = req.file.path;
+    } else if (req.file.mimetype.startsWith("video")) {
+      videoUrl = req.file.path;
+    }
     }
 
     const userIdSQL = `SELECT user_id FROM Users WHERE username = ?`;
