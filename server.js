@@ -38,8 +38,6 @@ db.connect(err => {
 
 app.get("/", (req, res) => res.json({ ok: true }));
 
-
-// const upload = multer({ storage });
 // --- Sign Up API ---
 app.post('/api/signup', async (req, res) => {
   try {
@@ -163,14 +161,14 @@ app.get("/api/profile", (req, res) => {
 });
 
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // folder for uploads
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // unique filename
-  }
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "uploads/"); // folder for uploads
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + path.extname(file.originalname)); // unique filename
+//   }
+// });
 
 
 // --- Edit Profile API ---
