@@ -7,7 +7,7 @@ const bodyParser = require("body-parser");
 const mysql = require("mysql2");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
-const multer = require("multer");
+// const multer = require("multer");
 const path = require("path");
 
 
