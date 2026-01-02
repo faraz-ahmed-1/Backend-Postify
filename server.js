@@ -133,7 +133,7 @@ app.get("/api/profile", (req, res) => {
 
   const sql = `
     SELECT u.user_id, u.username, u.full_name, u.bio, u.profile_pic,
-           (SELECT COUNT(*) FROM Posts p WHERE p.username = u.username) AS postCount,
+           (SELECT COUNT(*) FROM posts p WHERE p.username = u.username) AS postCount,
            (SELECT COUNT(*) FROM followers f WHERE f.following_id = u.user_id) AS followers,
            (SELECT COUNT(*) FROM followers f WHERE f.follower_id = u.user_id) AS following,
            CASE 
@@ -299,7 +299,7 @@ app.post("/api/create-post", upload.single("media"), (req, res) => {
       const userId = results[0].user_id;
 
       const insertPostSql = `
-        INSERT INTO Posts (username, content, image_url, video_url, created_at, user_id)
+        INSERT INTO posts (username, content, image_url, video_url, created_at, user_id)
         VALUES (?, ?, ?, ?, NOW(), ?)
       `;
 
@@ -336,7 +336,7 @@ app.get("/api/user-posts/:username", (req, res) => {
         u.profile_pic,
         COUNT(DISTINCT l.id) AS like_count,
         COUNT(DISTINCT c.id) AS comment_count
-    FROM Posts p
+    FROM posts p
     JOIN Users u ON p.username = u.username
     LEFT JOIN Likes l ON l.post_id = p.id
     LEFT JOIN comments c ON c.post_id = p.id
@@ -360,7 +360,7 @@ app.get("/api/post/:id", (req, res) => {
 
   const sql = `
   SELECT p.id, p.username, p.content, p.image_url, p.video_url, p.created_at, u.profile_pic
-  FROM Posts p
+  FROM posts p
   JOIN Users u ON p.username = u.username
   WHERE p.id = ?
   `;
@@ -379,7 +379,7 @@ app.get("/api/post/:id", (req, res) => {
 app.delete("/api/post/:id", (req, res) => {
   const { id } = req.params;
   console.log('post id: ', id);
-  const sql = `DELETE FROM Posts WHERE id = ?`;
+  const sql = `DELETE FROM posts WHERE id = ?`;
 
   db.query(sql, [id], (err, result) => {
     if (err) {
@@ -404,7 +404,7 @@ app.post("/api/like", (req, res) => {
   }
 
   // 1️⃣ Find post owner
-  const findOwnerSql = "SELECT user_id FROM Posts WHERE id = ?";
+  const findOwnerSql = "SELECT user_id FROM posts WHERE id = ?";
   db.query(findOwnerSql, [postId], (err, postResults) => {
     if (err) {
       console.error("❌ Find owner error:", err);
@@ -542,7 +542,7 @@ app.post("/api/comment", (req, res) => {
     // Step 2: Find post owner (from posts table)
     const findOwner = `
       SELECT p.user_id AS ownerId, u.user_id AS commenterId 
-      FROM Posts p 
+      FROM posts p 
       JOIN Users u ON u.username = ? 
       WHERE p.id = ?
     `;
@@ -865,7 +865,7 @@ app.get("/api/feed", (req, res) => {
       EXISTS(
         SELECT 1 FROM Likes l WHERE l.post_id = p.id AND l.username = ?
       ) AS likedByCurrentUser
-    FROM Posts p
+    FROM posts p
     JOIN Users u ON p.username = u.username
     WHERE u.username <> ?   -- exclude current user
     ORDER BY p.created_at DESC
@@ -962,7 +962,7 @@ SELECT
   p.video_url
 FROM Notifications n
 JOIN Users u ON u.user_id = n.sender_id
-LEFT JOIN Posts p ON p.id = n.post_id
+LEFT JOIN posts p ON p.id = n.post_id
 WHERE n.receiver_id = ?
 ORDER BY n.created_at DESC;
   `;
@@ -1123,7 +1123,7 @@ SELECT
   u.username AS sender_username,
   u.profile_pic AS sender_profile_pic
 FROM Messages m
-LEFT JOIN Posts p ON m.post_id = p.id
+LEFT JOIN posts p ON m.post_id = p.id
 JOIN Users u ON m.sender_id = u.user_id
 WHERE m.conversation_id = ? OR m.post_id = p.id
 ORDER BY m.created_at ASC;
