@@ -1024,37 +1024,57 @@ app.get("/api/conversations/:userId", (req, res) => {
   const { userId } = req.params;
 
   const sql = `
-    SELECT 
-      c.id AS conversation_id,
-      u.user_id,
-      u.username,
-      u.profile_pic,
-      (
-        SELECT m.message 
-        FROM Messages m 
-        WHERE m.conversation_id = c.id 
-        ORDER BY m.created_at DESC 
-        LIMIT 1
-      ) AS last_message,
-      (
-        SELECT m.created_at 
-        FROM Messages m 
-        WHERE m.conversation_id = c.id 
-        ORDER BY m.created_at DESC 
-        LIMIT 1
-      ) AS last_time,
-      (
-        SELECT COUNT(*) 
-        FROM Messages m 
-        WHERE m.conversation_id = c.id 
-          AND m.receiver_id = ? 
-          AND m.status != 'seen'
-      ) AS unread_count
-    FROM Conversations c
-    JOIN Users u 
-      ON (u.user_id = IF(c.user1_id = ?, c.user2_id, c.user1_id))
-    WHERE c.user1_id = ? OR c.user2_id = ?
-    ORDER BY last_time DESC
+SELECT 
+  c.id AS conversation_id,
+  u.user_id,
+  u.username,
+  u.profile_pic,
+
+  -- Last message text
+  (
+    SELECT m.message
+    FROM Messages m
+    WHERE 
+      (m.sender_id = c.user1_id AND m.receiver_id = c.user2_id)
+      OR
+      (m.sender_id = c.user2_id AND m.receiver_id = c.user1_id)
+    ORDER BY m.created_at DESC
+    LIMIT 1
+  ) AS last_message,
+
+  -- Last message time
+  (
+    SELECT m.created_at
+    FROM Messages m
+    WHERE 
+      (m.sender_id = c.user1_id AND m.receiver_id = c.user2_id)
+      OR
+      (m.sender_id = c.user2_id AND m.receiver_id = c.user1_id)
+    ORDER BY m.created_at DESC
+    LIMIT 1
+  ) AS last_time,
+
+  -- Unread count
+  (
+    SELECT COUNT(*)
+    FROM Messages m
+    WHERE
+      m.receiver_id = ?
+      AND m.status != 'seen'
+      AND (
+        (m.sender_id = c.user1_id AND m.receiver_id = c.user2_id)
+        OR
+        (m.sender_id = c.user2_id AND m.receiver_id = c.user1_id)
+      )
+  ) AS unread_count
+
+FROM Conversations c
+JOIN Users u
+  ON u.user_id = IF(c.user1_id = ?, c.user2_id, c.user1_id)
+
+WHERE c.user1_id = ? OR c.user2_id = ?
+ORDER BY last_time DESC;
+
   `;
 
   db.query(sql, [userId, userId, userId, userId], (err, results) => {
