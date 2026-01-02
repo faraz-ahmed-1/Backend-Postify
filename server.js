@@ -1,47 +1,45 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
+import mysql from "mysql2";
+import cors from "cors";
+import bcrypt from "bcryptjs";
 import multer from "multer";
 import { storage } from "./config/cloudinary.js";
-require("dotenv").config();
 
-const express = require("express");
-const bodyParser = require("body-parser");
-const mysql = require("mysql2");
-const cors = require("cors");
-const bcrypt = require("bcryptjs");
-// const multer = require("multer");
-const path = require("path");
-
-
-// Initialize app
 const app = express();
-// app.use(bodyParser.json());
-app.use(express.json());
+
+/* ---------------- MIDDLEWARE ---------------- */
 app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MySQL connection
+/* ---------------- MULTER (CLOUDINARY) ---------------- */
+const upload = multer({ storage });
+
+/* ---------------- DATABASE ---------------- */
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// Make sure SQL is connected
 db.connect(err => {
   if (err) {
-    console.error('❌ Database connection failed:', err);
+    console.error("❌ DB connection failed:", err);
     return;
   }
-  console.log('✅ Connected to MySQL');
+  console.log("✅ Connected to MySQL");
 });
 
-app.get('/', (req,res) => res.json({ ok: true }));
+app.get("/", (req, res) => res.json({ ok: true }));
 
-const upload = multer({ storage });
+
+// const upload = multer({ storage });
 // --- Sign Up API ---
 app.post('/api/signup', async (req, res) => {
   try {
