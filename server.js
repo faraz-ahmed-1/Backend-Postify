@@ -6,7 +6,7 @@ import mysql from "mysql2";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import multer from "multer";
-import { storage } from "./config/cloudinary.js";
+import { storage } from "./cloudinary.js";
 
 const app = express();
 
