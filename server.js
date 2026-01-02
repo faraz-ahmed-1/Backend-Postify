@@ -299,11 +299,11 @@ app.post("/api/create-post", upload.single("media"), (req, res) => {
       const userId = results[0].user_id;
 
       const insertPostSql = `
-        INSERT INTO posts (username, content, image_url, video_url, created_at, user_id)
-        VALUES (?, ?, ?, ?, NOW(), ?)
+        INSERT INTO posts (username, content, image_url, video_url, created_at)
+        VALUES (?, ?, ?, ?, NOW())
       `;
 
-      db.query(insertPostSql, [username, caption, imageUrl, videoUrl, userId], (err, result) => {
+      db.query(insertPostSql, [username, caption, imageUrl, videoUrl], (err, result) => {
         if (err) {
           console.error("Error creating post:", err);
           return res.status(500).json({ message: "Failed to create post" });
