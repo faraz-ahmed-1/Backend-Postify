@@ -1162,23 +1162,24 @@ console.log("Formatted: ", formatted);
 });
 
 app.post("/api/message", (req, res) => {
-  const {senderId, receiverId, text } = req.body;
-  console.log("📩 Incoming message:", req.body);
+  const { senderId, receiverId, text } = req.body;
 
   const sql = `
-INSERT INTO Messages (sender_id, receiver_id, message, created_at)
-VALUES (?, ?, ?, NOW());
+    INSERT INTO Messages 
+    (sender_id, receiver_id, message, status, created_at)
+    VALUES (?, ?, ?, 'sent', NOW())
   `;
 
   db.query(sql, [senderId, receiverId, text], (err, result) => {
     if (err) {
       console.error("❌ Message insert error:", err);
-      return res.status(500).json({ success: false, error: err.message });
+      return res.status(500).json({ success: false });
     }
 
     res.json({ success: true, message_id: result.insertId });
   });
 });
+
 
 // Mark as delivered (when receiver opens chat)
 app.put("/api/message/delivered/:conversationId/:receiverId", (req, res) => {
