@@ -1162,7 +1162,7 @@ console.log("Formatted: ", formatted);
 });
 
 app.post("/api/message", (req, res) => {
-  const { conversationId, senderId, receiverId, text } = req.body;
+  const {senderId, receiverId, text } = req.body;
   console.log("📩 Incoming message:", req.body);
 
   const sql = `
