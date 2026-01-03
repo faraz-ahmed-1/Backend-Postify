@@ -543,17 +543,18 @@ app.post("/api/comment", (req, res) => {
 
     // Step 2: Find post owner (from posts table)
     const findOwner = `
-      SELECT (
-          SELECT user_id
-          FROM Users
-          WHERE username = ?
-      )AS ownerId, u.user_id AS commenterId 
-      FROM posts p 
-      JOIN Users u ON u.username = ? 
-      WHERE p.id = ?
+SELECT (
+SELECT u.user_id
+FROM Users u
+JOIN posts p ON p.username = u.username
+WHERE p.id = ?
+) AS OwnerID, u.user_id AS commenterId 
+FROM posts p
+ JOIN Users u ON u.username = ? 
+ WHERE p.id = ?;
     `;
 
-    db.query(findOwner, [username, username, postid], (err, rows) => {
+    db.query(findOwner, [postid, username, postid], (err, rows) => {
       if (err || rows.length === 0) {
         console.error("❌ Error finding post owner:", err);
         return res.status(500).json({ message: "Error finding post owner" });
