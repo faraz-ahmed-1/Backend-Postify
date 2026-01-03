@@ -768,24 +768,24 @@ app.get("/api/likes/:postId", (req, res) => {
   });
 });
 
-// ✅ COMMENT on post
-app.post("/api/comment", (req, res) => {
-  console.log("📥 Received body:", req.body);
-  const { postId, username, comment } = req.body;  // use postId not currentPostId
+// // ✅ COMMENT on post
+// app.post("/api/comment", (req, res) => {
+//   console.log("📥 Received body:", req.body);
+//   const { postId, username, comment } = req.body;  // use postId not currentPostId
 
-  if (!postId || !username || !comment) {
-    return res.status(400).json({ success: false, message: "Missing fields" });
-  }
+//   if (!postId || !username || !comment) {
+//     return res.status(400).json({ success: false, message: "Missing fields" });
+//   }
 
-  db.query(
-    "INSERT INTO comments (post_id, username, comment, created_at) VALUES (?, ?, ?, NOW())",
-    [postId, username, comment],
-    (err, result) => {
-      if (err) return res.status(500).json({ success: false, message: "DB error" });
-      res.json({ success: true, message: "Comment added successfully" });
-    }
-  );
-});
+//   db.query(
+//     "INSERT INTO comments (post_id, username, comment, created_at) VALUES (?, ?, ?, NOW())",
+//     [postId, username, comment],
+//     (err, result) => {
+//       if (err) return res.status(500).json({ success: false, message: "DB error" });
+//       res.json({ success: true, message: "Comment added successfully" });
+//     }
+//   );
+// });
 
 // ✅ GET followers of a user
 app.get("/api/users/:username/followers", (req, res) => {
