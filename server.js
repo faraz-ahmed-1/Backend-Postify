@@ -1114,16 +1114,24 @@ SELECT
   m.message,
   m.post_id,
   m.created_at,
-  m.status,
-  p.image_url AS image_url,   -- keep separate
-  p.video_url AS video_url,
+  p.image_url,
+  p.video_url,
   u.username AS sender_username,
   u.profile_pic AS sender_profile_pic
 FROM Messages m
-LEFT JOIN posts p ON m.post_id = p.id
-JOIN Users u ON m.sender_id = u.user_id
-WHERE m.conversation_id = ? OR m.post_id = p.id
+LEFT JOIN posts p 
+  ON m.post_id = p.id
+JOIN Users u 
+  ON m.sender_id = u.user_id
+JOIN Conversations c
+  ON (
+    (m.sender_id = c.user1_id AND m.receiver_id = c.user2_id)
+    OR
+    (m.sender_id = c.user2_id AND m.receiver_id = c.user1_id)
+  )
+WHERE c.id = ?
 ORDER BY m.created_at ASC;
+
 
   `;
 
