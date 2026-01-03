@@ -1,12 +1,12 @@
-import dotenv from "dotenv";
-dotenv.config();
+require("dotenv").config();
 
-import express from "express";
-import mysql from "mysql2";
-import cors from "cors";
-import bcrypt from "bcryptjs";
-import multer from "multer";
-import { storage } from "./cloudinary.js";
+const express = require("express");
+const mysql = require("mysql2");
+const cors = require("cors");
+const bcrypt = require("bcryptjs");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
 
@@ -15,7 +15,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ---------------- MULTER (CLOUDINARY) ---------------- */
+/* ---------------- UPLOADS FOLDER ---------------- */
+const uploadDir = path.join(__dirname, "uploads");
+
+// create uploads folder if missing
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// serve uploads publicly
+app.use("/uploads", express.static(uploadDir));
+
+/* ---------------- MULTER (LOCAL STORAGE) ---------------- */
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
 const upload = multer({ storage });
 
 /* ---------------- DATABASE ---------------- */
@@ -159,17 +179,6 @@ app.get("/api/profile", (req, res) => {
     res.json(profile);
   });
 });
-
-
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, "uploads/"); // folder for uploads
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, Date.now() + path.extname(file.originalname)); // unique filename
-//   }
-// });
-
 
 // --- Edit Profile API ---
 app.post("/api/edit-profile", upload.single("profile_pic"), async (req, res) => {
@@ -552,8 +561,7 @@ app.post("/api/comment", (req, res) => {
 
       const ownerId = rows[0].ownerId;
       const commenterId = rows[0].commenterId;
-      console.log("CommenterID: ", commenterId);
-      console.log("OwnerID: ", ownerId);
+
       // Step 3: Only create notification if commenter ≠ post owner
       if (ownerId !== commenterId) {
         createNotification(commenterId, ownerId, "comment", postid);
@@ -1115,24 +1123,16 @@ SELECT
   m.message,
   m.post_id,
   m.created_at,
-  p.image_url,
-  p.video_url,
+  m.status,
+  p.image_url AS image_url,   -- keep separate
+  p.video_url AS video_url,
   u.username AS sender_username,
   u.profile_pic AS sender_profile_pic
 FROM Messages m
-LEFT JOIN posts p 
-  ON m.post_id = p.id
-JOIN Users u 
-  ON m.sender_id = u.user_id
-JOIN Conversations c
-  ON (
-    (m.sender_id = c.user1_id AND m.receiver_id = c.user2_id)
-    OR
-    (m.sender_id = c.user2_id AND m.receiver_id = c.user1_id)
-  )
-WHERE c.id = ?
+LEFT JOIN posts p ON m.post_id = p.id
+JOIN Users u ON m.sender_id = u.user_id
+WHERE m.conversation_id = ? OR m.post_id = p.id
 ORDER BY m.created_at ASC;
-
 
   `;
 
@@ -1163,24 +1163,23 @@ console.log("Formatted: ", formatted);
 });
 
 app.post("/api/message", (req, res) => {
-  const { senderId, receiverId, text } = req.body;
+  const { conversationId, senderId, receiverId, text } = req.body;
+  console.log("📩 Incoming message:", req.body);
 
   const sql = `
-    INSERT INTO Messages 
-    (sender_id, receiver_id, message, status, created_at)
-    VALUES (?, ?, ?, 'sent', NOW())
+    INSERT INTO Messages (conversation_id, sender_id, receiver_id, message, status, created_at)
+    VALUES (?, ?, ?, ?, 'sent', NOW())
   `;
 
-  db.query(sql, [senderId, receiverId, text], (err, result) => {
+  db.query(sql, [conversationId, senderId, receiverId, text], (err, result) => {
     if (err) {
       console.error("❌ Message insert error:", err);
-      return res.status(500).json({ success: false });
+      return res.status(500).json({ success: false, error: err.message });
     }
 
     res.json({ success: true, message_id: result.insertId });
   });
 });
-
 
 // Mark as delivered (when receiver opens chat)
 app.put("/api/message/delivered/:conversationId/:receiverId", (req, res) => {
