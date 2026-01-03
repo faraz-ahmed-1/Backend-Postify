@@ -552,7 +552,8 @@ app.post("/api/comment", (req, res) => {
 
       const ownerId = rows[0].ownerId;
       const commenterId = rows[0].commenterId;
-
+      console.log("CommenterID: ", commenterId);
+      console.log("OwnerID: ", ownerId);
       // Step 3: Only create notification if commenter ≠ post owner
       if (ownerId !== commenterId) {
         createNotification(commenterId, ownerId, "comment", postid);
