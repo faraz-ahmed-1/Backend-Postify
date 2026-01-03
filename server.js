@@ -526,7 +526,9 @@ app.get("/api/post/:id/likes", (req, res) => {
 
 app.post("/api/comment", (req, res) => {
   const { postid, username, comment } = req.body;
-
+console.log(req.body);
+console.log("postid: ", postid);
+console.log("username: ", username);
   if (!postid || !username || !comment) {
     return res.status(400).json({ message: "Post ID, username and comment required" });
   }
