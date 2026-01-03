@@ -894,7 +894,7 @@ app.post("/api/create-story", upload.single("storyMedia"), (req, res) => {
     return res.status(400).json({ message: "No file uploaded!" });
   }
 
-  const media_url = "/uploads/" + req.file.filename;
+  const media_url = req.file.path;
 
   // detect file type by MIME
   const media_type = req.file.mimetype.startsWith("video") ? "video" : "image";
