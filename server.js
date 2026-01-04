@@ -889,34 +889,53 @@ app.get("/api/feed", (req, res) => {
   });
 });
 
-// API Route to create story
+// --- Create Story API (Cloudinary) ---
 app.post("/api/create-story", upload.single("storyMedia"), (req, res) => {
-  const { username } = req.body;
+  try {
+    const { username } = req.body;
 
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded!" });
-  }
-
-  const media_url = req.file.path;
-
-  // detect file type by MIME
-  const media_type = req.file.mimetype.startsWith("video") ? "video" : "image";
-
-  const sql = `
-    INSERT INTO stories (username, media_url, media_type, created_at, expires_at)
-    VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR))
-  `;
-
-  db.query(sql, [username, media_url, media_type], (err, result) => {
-    if (err) {
-      console.error("Error inserting story:", err);
-      return res.status(500).json({ message: "Database error" });
+    if (!username) {
+      return res.status(400).json({ message: "Username is required" });
     }
-    res.status(200).json({
-      message: "Story created successfully ✅",
-      storyId: result.insertId,
-    });
-  });
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Story media is required" });
+    }
+
+    // Cloudinary URL
+    const mediaUrl = req.file.path;
+
+    // Detect media type
+    const mediaType = req.file.mimetype.startsWith("video")
+      ? "video"
+      : "image";
+
+    const insertStorySql = `
+      INSERT INTO stories (username, media_url, media_type, created_at, expires_at)
+      VALUES (?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR))
+    `;
+
+    db.query(
+      insertStorySql,
+      [username, mediaUrl, mediaType],
+      (err, result) => {
+        if (err) {
+          console.error("Error creating story:", err);
+          return res.status(500).json({ message: "Failed to create story" });
+        }
+
+        res.status(200).json({
+          message: "Story created successfully ✅",
+          storyId: result.insertId,
+          media_url: mediaUrl,
+          media_type: mediaType
+        });
+      }
+    );
+  } catch (err) {
+    console.error("Create story error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 app.get("/api/stories", (req, res) => {
