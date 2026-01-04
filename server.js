@@ -6,12 +6,9 @@ import mysql from "mysql2";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/* 👉 Cloudinary storage (SAME FOLDER) */
+import { storage } from "./cloudinary.js";
 
 const app = express();
 
@@ -20,27 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ---------------- UPLOADS FOLDER ---------------- */
-const uploadDir = path.join(__dirname, "uploads");
-
-// create uploads folder if missing
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-// serve uploads publicly
-app.use("/uploads", express.static(uploadDir));
-
-/* ---------------- MULTER (LOCAL STORAGE) ---------------- */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
+/* ---------------- MULTER (CLOUDINARY) ---------------- */
 const upload = multer({ storage });
 
 /* ---------------- DATABASE ---------------- */
@@ -62,6 +39,8 @@ db.connect(err => {
 });
 
 app.get("/", (req, res) => res.json({ ok: true }));
+
+export { upload, db };
 
 // --- Sign Up API ---
 app.post('/api/signup', async (req, res) => {
