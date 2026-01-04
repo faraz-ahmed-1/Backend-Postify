@@ -1185,11 +1185,11 @@ app.post("/api/message", (req, res) => {
   console.log("📩 Incoming message:", req.body);
 
   const sql = `
-    INSERT INTO Messages (conversation_id, sender_id, receiver_id, message, status, created_at)
-    VALUES (?, ?, ?, ?, 'sent', NOW())
+    INSERT INTO Messages ( sender_id, receiver_id, message, status, created_at)
+    VALUES (?, ?, ?, 'sent', NOW())
   `;
 
-  db.query(sql, [conversationId, senderId, receiverId, text], (err, result) => {
+  db.query(sql, [senderId, receiverId, text], (err, result) => {
     if (err) {
       console.error("❌ Message insert error:", err);
       return res.status(500).json({ success: false, error: err.message });
