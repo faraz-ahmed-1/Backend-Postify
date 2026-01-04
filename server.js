@@ -390,7 +390,11 @@ app.post("/api/like", (req, res) => {
   }
 
   // 1️⃣ Find post owner
-  const findOwnerSql = "SELECT user_id FROM posts WHERE id = ?";
+  const findOwnerSql = `
+  SELECT u.user_id
+  FROM Users u
+  JOIN posts p ON p.username = u.username
+  WHERE p.id = ?`;
   db.query(findOwnerSql, [postId], (err, postResults) => {
     if (err) {
       console.error("❌ Find owner error:", err);
@@ -546,7 +550,7 @@ FROM posts p
         return res.status(500).json({ message: "Error finding post owner" });
       }
 
-      const ownerId = rows[0].ownerId;
+      const ownerId = rows[0].OwnerID;
       const commenterId = rows[0].commenterId;
 
       // Step 3: Only create notification if commenter ≠ post owner
